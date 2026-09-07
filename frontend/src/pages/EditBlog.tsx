@@ -11,6 +11,8 @@ const EditBlog = () => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('Công nghệ')
+  const [thumbnail, setThumbnail] = useState('')
+  const [previewError, setPreviewError] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -48,6 +50,7 @@ const EditBlog = () => {
         setTitle(blogData.title)
         setContent(blogData.content)
         setCategory(blogData.category || 'Công nghệ')
+        setThumbnail(blogData.thumbnail || '')
       } catch (err) {
         console.error(err)
         setError('Lỗi tải bài viết để chỉnh sửa.')
@@ -70,11 +73,16 @@ const EditBlog = () => {
       return
     }
 
+    if (thumbnail.trim() && !/^https?:\/\/.+/i.test(thumbnail.trim())) {
+      setError('Thumbnail URL không hợp lệ (phải bắt đầu bằng http:// hoặc https://)')
+      return
+    }
+
     if (!id) return
 
     try {
       setSubmitting(true)
-      await updateBlog(id, title.trim(), content.trim(), category)
+      await updateBlog(id, title.trim(), content.trim(), category, thumbnail.trim())
       setSubmitting(false)
       navigate(`/blog/${id}`)
     } catch (err) {
@@ -171,6 +179,54 @@ const EditBlog = () => {
                 <option value='Cuộc sống'>🌱 Cuộc sống</option>
                 <option value='AI'>🤖 AI</option>
               </select>
+            </div>
+
+            <div className='form-group'>
+              <label htmlFor='thumbnail' className='form-label' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Ảnh bìa (Thumbnail URL - Tùy chọn)</span>
+                {thumbnail && (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setThumbnail('')
+                      setPreviewError(false)
+                    }}
+                    className='btn-text-action'
+                    title='Xóa ảnh bìa'
+                  >
+                    ✕ Xóa URL ảnh
+                  </button>
+                )}
+              </label>
+              <input
+                id='thumbnail'
+                type='url'
+                value={thumbnail}
+                onChange={(e) => {
+                  setThumbnail(e.target.value)
+                  setPreviewError(false)
+                }}
+                placeholder='Nhập đường dẫn ảnh trực tiếp (ví dụ: https://images.unsplash.com/...)...'
+                disabled={submitting}
+                className='input'
+              />
+              {thumbnail.trim() && (
+                <div className='thumbnail-preview-container'>
+                  <div className='thumbnail-preview-label'>Xem trước ảnh bìa:</div>
+                  {previewError ? (
+                    <div className='thumbnail-preview-error'>
+                      ⚠️ Không thể tải ảnh từ URL này. Vui lòng kiểm tra lại đường dẫn hợp lệ.
+                    </div>
+                  ) : (
+                    <img
+                      src={thumbnail.trim()}
+                      alt='Xem trước ảnh bìa'
+                      className='thumbnail-preview-img'
+                      onError={() => setPreviewError(true)}
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             <div className='form-group'>

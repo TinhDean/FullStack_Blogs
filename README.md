@@ -71,7 +71,8 @@ Hệ thống nền tảng Blog Full-Stack hiện đại, chuẩn kiến trúc Ty
 | **ProtectedRoute (Zero-Flicker)** | Bảo vệ các route `/create`, `/blog/:id/edit`, `/my-blogs`, xử lý loading chống nhấp nháy UI và tự động chuyển hướng về `/login`. | ✅ Hoàn thành |
 | **Trang chủ & Danh sách Blog** | Phân trang linh hoạt (`page`, `limit`), lọc theo danh mục (Sidebar), tìm kiếm bài viết theo từ khóa tiêu đề (`/search`). | ✅ Hoàn thành |
 | **Chi tiết bài viết (Blog Detail)** | Xem nội dung bài viết, tự động cộng dồn lượt xem (`/view`), thả tim (`/like`), nút Sửa/Xóa hiển thị theo quyền tác giả/admin. | ✅ Hoàn thành |
-| **Đăng bài & Sửa bài** | Form chọn danh mục, nhập tiêu đề, nội dung với thông báo lỗi và trạng thái loading trực quan. | ✅ Hoàn thành |
+| **Đăng bài & Sửa bài** | Form chọn danh mục, nhập tiêu đề, ảnh bìa (thumbnail URL) và nội dung Markdown với live preview và thông báo lỗi. | ✅ Hoàn thành |
+| **Ảnh bìa bài viết (Thumbnail / Cover)** | Hỗ trợ nhập URL ảnh bìa tùy chọn (HTTP/HTTPS), hiển thị card thumbnail có hiệu ứng zoom, hero cover trên trang chi tiết và live preview khi tạo/sửa bài. | ✅ Hoàn thành |
 | **Bài viết của tôi (My Blogs)** | Bảng quản lý bài viết của riêng user kèm 3 thẻ thống kê tổng quan (Tổng bài viết, Tổng lượt xem, Tổng lượt thích). | ✅ Hoàn thành |
 | **Hệ thống Bình luận** | Gửi bình luận khi đã đăng nhập; Khách vãng lai thấy banner nhắc đăng nhập. | ✅ Hoàn thành |
 | **Xóa Bình luận** | Xóa bình luận có modal xác nhận; chỉ chủ comment hoặc admin mới có quyền xóa. | ✅ Hoàn thành |
@@ -295,16 +296,16 @@ npx vitest run --coverage
 ```
 
 ### Kết quả Kiểm thử Hiện tại
-- **51 / 51 Unit Tests PASS (100%)**
+- **54 / 54 Unit Tests PASS (100%)**
 ```text
 ✓ src/middlewares/auth.middleware.test.ts (4 tests)
 ✓ src/middlewares/error.middleware.test.ts (9 tests)
-✓ src/controllers/blog.controller.test.ts (12 tests)
+✓ src/controllers/blog.controller.test.ts (15 tests)
 ✓ src/controllers/auth.controller.test.ts (13 tests)
 ✓ src/controllers/comment.controller.test.ts (13 tests)
 
 Test Files  5 passed (5)
-     Tests  51 passed (51)
+     Tests  54 passed (54)
 ```
 
 ---
@@ -342,5 +343,5 @@ Dự án có đầy đủ tài liệu đặc tả chuẩn BA và QA nằm trong 
 - [x] **Markdown Editor & Preview**: Tích hợp trình soạn thảo Markdown hỗ trợ thanh công cụ, xem trước live preview và chế độ song song split-view.
 - [x] **Global Error Handler**: Chuẩn hóa middleware bắt lỗi tập trung (AppError, ValidationError, CastError, JWT, 404 handler) ở backend.
 - [x] **GitHub Actions CI**: Thiết lập pipeline tự động chạy build và test khi Push hoặc tạo Pull Request.
-- [ ] **Thumbnail Image Upload**: Hỗ trợ đính kèm ảnh đại diện cho bài viết.
+- [x] **Blog Thumbnail / Cover Image**: Hỗ trợ đính kèm ảnh đại diện (Thumbnail URL HTTP/HTTPS) cho bài viết với live preview và responsive layout.
 - [ ] **Production Deployment**: Triển khai trực tuyến lên Vercel (Frontend), Render (Backend) và MongoDB Atlas (Database).

@@ -40,9 +40,9 @@ describe('Blog Controller', () => {
     vi.clearAllMocks();
   });
 
-  it('should create a blog', async () => {
+  it('should create a blog with thumbnail', async () => {
     const req = {
-      body: { title: 'Test', content: 'Content' },
+      body: { title: 'Test with Thumbnail', content: 'Content', category: 'AI', thumbnail: 'https://example.com/cover.jpg' },
       user: { userId: 'user123' }
     } as any;
 
@@ -53,7 +53,30 @@ describe('Blog Controller', () => {
     await createBlog(req, res);
 
     expect(Blog.create).toHaveBeenCalledWith({
-      title: 'Test',
+      title: 'Test with Thumbnail',
+      content: 'Content',
+      category: 'AI',
+      thumbnail: 'https://example.com/cover.jpg',
+      author: 'user123'
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  it('should create a blog without thumbnail', async () => {
+    const req = {
+      body: { title: 'Test without Thumbnail', content: 'Content' },
+      user: { userId: 'user123' }
+    } as any;
+
+    const res = mockResponse();
+
+    (Blog.create as any).mockResolvedValue(req.body);
+
+    await createBlog(req, res);
+
+    expect(Blog.create).toHaveBeenCalledWith({
+      title: 'Test without Thumbnail',
       content: 'Content',
       author: 'user123'
     });
@@ -143,6 +166,52 @@ describe('Blog Controller', () => {
     await updateBlog(req, res);
 
     expect(Blog.findById).toHaveBeenCalledWith('1');
+    expect(Blog.findByIdAndUpdate).toHaveBeenCalledWith('1', req.body, { new: true, runValidators: true });
+    expect(res.json).toHaveBeenCalledWith(req.body);
+  });
+
+  it('should update a blog thumbnail', async () => {
+    const req = {
+      params: { id: '1' },
+      body: { thumbnail: 'https://example.com/new-cover.jpg' },
+      user: { userId: 'user123', role: 'user' }
+    } as any;
+
+    const res = mockResponse();
+
+    (Blog.findById as any).mockResolvedValue({
+      _id: '1',
+      title: 'Blog',
+      author: 'user123'
+    });
+    (Blog.findByIdAndUpdate as any).mockResolvedValue(req.body);
+
+    await updateBlog(req, res);
+
+    expect(Blog.findByIdAndUpdate).toHaveBeenCalledWith('1', req.body, { new: true, runValidators: true });
+    expect(res.json).toHaveBeenCalledWith(req.body);
+  });
+
+  it('should allow removing a thumbnail with empty string', async () => {
+    const req = {
+      params: { id: '1' },
+      body: { thumbnail: '' },
+      user: { userId: 'user123', role: 'user' }
+    } as any;
+
+    const res = mockResponse();
+
+    (Blog.findById as any).mockResolvedValue({
+      _id: '1',
+      title: 'Blog',
+      thumbnail: 'https://example.com/old-cover.jpg',
+      author: 'user123'
+    });
+    (Blog.findByIdAndUpdate as any).mockResolvedValue(req.body);
+
+    await updateBlog(req, res);
+
+    expect(Blog.findByIdAndUpdate).toHaveBeenCalledWith('1', { thumbnail: '' }, { new: true, runValidators: true });
     expect(res.json).toHaveBeenCalledWith(req.body);
   });
 

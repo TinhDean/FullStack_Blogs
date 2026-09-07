@@ -241,6 +241,21 @@ const BlogDetail = () => {
       </div>
 
       <article className='detail-card'>
+        {/* Cover Thumbnail */}
+        {blog.thumbnail && blog.thumbnail.trim() && (
+          <div className='detail-cover-wrapper'>
+            <img
+              src={blog.thumbnail.trim()}
+              alt={blog.title}
+              className='detail-cover-img'
+              onError={(e) => {
+                const parent = e.currentTarget.parentElement
+                if (parent) parent.style.display = 'none'
+              }}
+            />
+          </div>
+        )}
+
         {/* title */}
         <h1 className='detail-title'>{blog.title}</h1>
 

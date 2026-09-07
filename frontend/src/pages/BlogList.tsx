@@ -11,6 +11,7 @@ interface Blog {
   likes: number
   views: number
   category?: string
+  thumbnail?: string
   createdAt?: string
   author?: {
     username: string

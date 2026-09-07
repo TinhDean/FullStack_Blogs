@@ -4,6 +4,7 @@ export interface BlogDocument extends Document {
   title: string;
   content: string;
   category: string;
+  thumbnail?: string;
   author?: mongoose.Types.ObjectId;
   views: number;
   likes: number;
@@ -28,14 +29,25 @@ const BlogSchema = new Schema(
       type: String,
       default: "Chưa phân loại"
     },
+    thumbnail: {
+      type: String,
+      default: '',
+      validate: {
+        validator: function (v: string) {
+          if (!v || v.trim() === '') return true;
+          return /^https?:\/\/.+/i.test(v.trim());
+        },
+        message: 'Thumbnail URL phải bắt đầu bằng http:// hoặc https://'
+      }
+    },
     views: {
-  type: Number,
-  default: 0
-},
-likes: {
-  type: Number,
-  default: 0
-},
+      type: Number,
+      default: 0
+    },
+    likes: {
+      type: Number,
+      default: 0
+    },
     isDeleted: {
       type: Boolean,
       default: false

@@ -88,7 +88,7 @@ export const updateBlog = async (req: any, res: Response) => {
     const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     res.json(updatedBlog);

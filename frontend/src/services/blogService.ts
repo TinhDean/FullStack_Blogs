@@ -3,6 +3,7 @@ export interface Blog {
   title: string
   content: string
   category?: string
+  thumbnail?: string
   likes: number
   views: number
   createdAt: string
@@ -112,7 +113,7 @@ export const createComment = async (blogId: string, content: string): Promise<Co
   return handleResponse<Comment>(res, 'Gửi comment thất bại')
 }
 
-export const createBlog = async (title: string, content: string, category: string): Promise<Blog> => {
+export const createBlog = async (title: string, content: string, category: string, thumbnail?: string): Promise<Blog> => {
   const res = await fetch(API, {
     method: 'POST',
     headers: {
@@ -122,14 +123,15 @@ export const createBlog = async (title: string, content: string, category: strin
     body: JSON.stringify({
       title,
       content,
-      category
+      category,
+      thumbnail: thumbnail ? thumbnail.trim() : ''
     })
   })
 
   return handleResponse<Blog>(res, 'Tạo bài viết thất bại')
 }
 
-export const updateBlog = async (id: string, title: string, content: string, category: string): Promise<Blog> => {
+export const updateBlog = async (id: string, title: string, content: string, category: string, thumbnail?: string): Promise<Blog> => {
   const res = await fetch(`${API}/${id}`, {
     method: 'PUT',
     headers: {
@@ -139,7 +141,8 @@ export const updateBlog = async (id: string, title: string, content: string, cat
     body: JSON.stringify({
       title,
       content,
-      category
+      category,
+      thumbnail: thumbnail !== undefined ? thumbnail.trim() : undefined
     })
   })
 
