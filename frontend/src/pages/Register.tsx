@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { registerUser } from '../services/blogService'
+import { useAuth } from '../context/AuthContext'
 
 const Register = () => {
   const navigate = useNavigate()
+  const { setAuthData } = useAuth()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -47,12 +49,11 @@ const Register = () => {
       setLoading(true)
       const data = await registerUser(username.trim(), email.trim(), password)
 
-      // Đăng nhập tự động sau khi đăng ký
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      // Đăng nhập tự động sau khi đăng ký qua AuthContext
+      setAuthData(data.token, data.user)
 
       setLoading(false)
-      window.location.href = '/'
+      navigate('/')
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? err.message : 'Đăng ký thất bại. Vui lòng thử lại.')

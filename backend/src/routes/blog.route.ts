@@ -8,7 +8,8 @@ import {
   softDeleteBlog,
   increaseView,
   likeBlog,
-  searchBlogs
+  searchBlogs,
+  getMyBlogs
 } from '../controllers/blog.controller';
 import loggerMiddleware from '../middlewares/logger.middleware';
 import authMiddleware from '../middlewares/auth.middleware';
@@ -21,6 +22,7 @@ router.use(loggerMiddleware);
 router.post('/', authMiddleware, createBlog);
 router.get('/', getAllBlogs);
 router.get("/search", searchBlogs);
+router.get('/user/me', authMiddleware, getMyBlogs);
 router.get('/:id', getBlogById);
 router.put('/:id', authMiddleware, updateBlog);
 router.delete('/:id', authMiddleware, deleteBlog);

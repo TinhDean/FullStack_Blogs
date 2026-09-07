@@ -7,7 +7,8 @@ import {
   getBlogById,
   updateBlog,
   deleteBlog,
-  softDeleteBlog
+  softDeleteBlog,
+  getMyBlogs
 } from './blog.controller';
 
 import Blog from '../models/blog.model';
@@ -190,4 +191,117 @@ describe('Blog Controller', () => {
       message: 'Soft delete blog successfully'
     });
   });
+
+  describe('getMyBlogs', () => {
+    it('should get all blogs for the authenticated user and compute stats correctly', async () => {
+      const req = {
+        user: { userId: 'user123' }
+      } as any;
+      const res = mockResponse();
+
+      const mockBlogs = [
+        { _id: '1', title: 'Blog 1', views: 100, likes: 25, author: 'user123' },
+        { _id: '2', title: 'Blog 2', views: 50, likes: 10, author: 'user123' }
+      ];
+
+      const mockSort = vi.fn().mockResolvedValue(mockBlogs);
+      (Blog.find as any).mockReturnValue({ sort: mockSort });
+
+      await getMyBlogs(req, res);
+
+      expect(Blog.find).toHaveBeenCalledWith({
+        author: 'user123',
+        isDeleted: false
+      });
+      expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.json).toHaveBeenCalledWith({
+        blogs: mockBlogs,
+        stats: {
+          totalBlogs: 2,
+          totalViews: 150,
+          totalLikes: 35
+        }
+      });
+    });
+
+    it('should return empty blogs and 0 stats if user has no blogs', async () => {
+      const req = {
+        user: { userId: 'user_new' }
+      } as any;
+      const res = mockResponse();
+
+      const mockSort = vi.fn().mockResolvedValue([]);
+      (Blog.find as any).mockReturnValue({ sort: mockSort });
+
+      await getMyBlogs(req, res);
+
+      expect(Blog.find).toHaveBeenCalledWith({
+        author: 'user_new',
+        isDeleted: false
+      });
+      expect(res.json).toHaveBeenCalledWith({
+        blogs: [],
+        stats: {
+          totalBlogs: 0,
+          totalViews: 0,
+          totalLikes: 0
+        }
+      });
+    });
+
+    it('should safely handle blogs with undefined views and likes (default to 0)', async () => {
+      const req = {
+        user: { userId: 'user123' }
+      } as any;
+      const res = mockResponse();
+
+      const mockBlogs = [
+        { _id: '1', title: 'Blog without views or likes', author: 'user123' }
+      ];
+
+      const mockSort = vi.fn().mockResolvedValue(mockBlogs);
+      (Blog.find as any).mockReturnValue({ sort: mockSort });
+
+      await getMyBlogs(req, res);
+
+      expect(res.json).toHaveBeenCalledWith({
+        blogs: mockBlogs,
+        stats: {
+          totalBlogs: 1,
+          totalViews: 0,
+          totalLikes: 0
+        }
+      });
+    });
+
+    it('should return 401 if user is not authenticated', async () => {
+      const req = { user: undefined } as any;
+      const res = mockResponse();
+
+      await getMyBlogs(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Không có quyền truy cập, vui lòng đăng nhập'
+      });
+    });
+
+    it('should return 500 if database error occurs', async () => {
+      const req = {
+        user: { userId: 'user123' }
+      } as any;
+      const res = mockResponse();
+
+      const mockSort = vi.fn().mockRejectedValue(new Error('Database query failure'));
+      (Blog.find as any).mockReturnValue({ sort: mockSort });
+
+      await getMyBlogs(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Database query failure'
+      });
+    });
+  });
 });
+

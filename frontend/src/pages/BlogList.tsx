@@ -33,25 +33,17 @@ const BlogList = () => {
         setLoading(true)
         setCurrentPage(1)
 
-        let data
-
         if (keyword && keyword.trim() !== '') {
-          data = await searchBlogs(keyword)
-          if (Array.isArray(data)) {
-            setBlogs(data)
-          } else if (data?.data) {
-            setBlogs(data.data)
-          } else {
-            setBlogs([])
-          }
+          const searchResults = await searchBlogs(keyword)
+          setBlogs(Array.isArray(searchResults) ? searchResults : [])
           setTotalPages(1)
         } else {
-          data = await getAllBlogs(category || undefined, 1, 6)
-          if (data && Array.isArray(data.blogs)) {
-            setBlogs(data.blogs)
-            setTotalPages(data.totalPages || 1)
-          } else if (Array.isArray(data)) {
-            setBlogs(data)
+          const blogData = await getAllBlogs(category || undefined, 1, 6)
+          if (blogData && Array.isArray(blogData.blogs)) {
+            setBlogs(blogData.blogs)
+            setTotalPages(blogData.totalPages || 1)
+          } else if (Array.isArray(blogData)) {
+            setBlogs(blogData)
             setTotalPages(1)
           } else {
             setBlogs([])

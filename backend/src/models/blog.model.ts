@@ -5,6 +5,8 @@ export interface BlogDocument extends Document {
   content: string;
   category: string;
   author?: mongoose.Types.ObjectId;
+  views: number;
+  likes: number;
   isDeleted: boolean;
 }
 

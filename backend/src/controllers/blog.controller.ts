@@ -211,3 +211,38 @@ export const searchBlogs = async (req: Request, res: Response) => {
 
   }
 };
+
+/**
+ * GET /api/blogs/user/me
+ * Lấy danh sách bài viết của user hiện tại kèm thống kê
+ */
+export const getMyBlogs = async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Không có quyền truy cập, vui lòng đăng nhập' });
+    }
+
+    const blogs = await Blog.find({
+      author: userId,
+      isDeleted: false
+    }).sort({ createdAt: -1 });
+
+    const totalBlogs = blogs.length;
+    const totalViews = blogs.reduce((sum: number, blog: any) => sum + (blog.views || 0), 0);
+    const totalLikes = blogs.reduce((sum: number, blog: any) => sum + (blog.likes || 0), 0);
+
+    return res.json({
+      blogs,
+      stats: {
+        totalBlogs,
+        totalViews,
+        totalLikes
+      }
+    });
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message || 'Lỗi hệ thống' });
+  }
+};
+

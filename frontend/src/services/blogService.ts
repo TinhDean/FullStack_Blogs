@@ -15,6 +15,7 @@ export interface Blog {
 export interface Comment {
   _id: string
   blogId: string
+  userId?: string
   username: string
   content: string
   createdAt: string
@@ -35,6 +36,20 @@ const getAuthHeaders = (): Record<string, string> => {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+const handleResponse = async <T>(res: Response, fallbackMessage: string): Promise<T> => {
+  if (!res.ok) {
+    let errorMessage = fallbackMessage
+    try {
+      const errorData = await res.json()
+      errorMessage = errorData.message || errorData.error || fallbackMessage
+    } catch {
+      errorMessage = res.statusText || fallbackMessage
+    }
+    throw new Error(errorMessage)
+  }
+  return res.json()
+}
+
 export const getAllBlogs = async (category?: string, page?: number, limit?: number) => {
   const params = new URLSearchParams()
   if (category) params.append('category', category)
@@ -45,20 +60,20 @@ export const getAllBlogs = async (category?: string, page?: number, limit?: numb
   const url = queryString ? `${API}?${queryString}` : API
   const res = await fetch(url)
 
-  return res.json()
+  return handleResponse<any>(res, 'Lấy danh sách bài viết thất bại')
 }
 
-export const getBlogById = async (id: string) => {
+export const getBlogById = async (id: string): Promise<Blog> => {
   const res = await fetch(`${API}/${id}`)
 
-  return res.json()
+  return handleResponse<Blog>(res, 'Không tìm thấy bài viết')
 }
 
 export const likeBlog = async (id: string) => {
   const res = await fetch(`http://localhost:5000/api/blogs/${id}/like`, {
     method: 'PATCH'
   })
-  return res.json()
+  return handleResponse<Blog>(res, 'Thích bài viết thất bại')
 }
 
 export const increaseView = async (id: string) => {
@@ -66,22 +81,22 @@ export const increaseView = async (id: string) => {
     method: 'PATCH'
   })
 
-  return res.json()
+  return handleResponse<Blog>(res, 'Cập nhật lượt xem thất bại')
 }
 
-export const searchBlogs = async (keyword: string) => {
-  const res = await fetch(`http://localhost:5000/api/blogs/search?search=${keyword}`)
+export const searchBlogs = async (keyword: string): Promise<Blog[]> => {
+  const res = await fetch(`http://localhost:5000/api/blogs/search?search=${encodeURIComponent(keyword)}`)
 
-  return res.json()
+  return handleResponse<Blog[]>(res, 'Tìm kiếm bài viết thất bại')
 }
 
-export const getComments = async (blogId: string) => {
+export const getComments = async (blogId: string): Promise<Comment[]> => {
   const res = await fetch(`http://localhost:5000/api/comments/${blogId}`)
 
-  return res.json()
+  return handleResponse<Comment[]>(res, 'Lấy danh sách bình luận thất bại')
 }
 
-export const createComment = async (blogId: string, content: string) => {
+export const createComment = async (blogId: string, content: string): Promise<Comment> => {
   const res = await fetch('http://localhost:5000/api/comments', {
     method: 'POST',
     headers: {
@@ -94,15 +109,10 @@ export const createComment = async (blogId: string, content: string) => {
     })
   })
 
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.message || 'Gửi comment thất bại')
-  }
-
-  return res.json()
+  return handleResponse<Comment>(res, 'Gửi comment thất bại')
 }
 
-export const createBlog = async (title: string, content: string, category: string) => {
+export const createBlog = async (title: string, content: string, category: string): Promise<Blog> => {
   const res = await fetch(API, {
     method: 'POST',
     headers: {
@@ -116,15 +126,10 @@ export const createBlog = async (title: string, content: string, category: strin
     })
   })
 
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.message || 'Tạo bài viết thất bại')
-  }
-
-  return res.json()
+  return handleResponse<Blog>(res, 'Tạo bài viết thất bại')
 }
 
-export const updateBlog = async (id: string, title: string, content: string, category: string) => {
+export const updateBlog = async (id: string, title: string, content: string, category: string): Promise<Blog> => {
   const res = await fetch(`${API}/${id}`, {
     method: 'PUT',
     headers: {
@@ -138,15 +143,10 @@ export const updateBlog = async (id: string, title: string, content: string, cat
     })
   })
 
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.message || 'Cập nhật bài viết thất bại')
-  }
-
-  return res.json()
+  return handleResponse<Blog>(res, 'Cập nhật bài viết thất bại')
 }
 
-export const deleteBlog = async (id: string) => {
+export const deleteBlog = async (id: string): Promise<{ message: string }> => {
   const res = await fetch(`${API}/${id}`, {
     method: 'DELETE',
     headers: {
@@ -154,12 +154,7 @@ export const deleteBlog = async (id: string) => {
     }
   })
 
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.message || 'Xóa bài viết thất bại')
-  }
-
-  return res.json()
+  return handleResponse<{ message: string }>(res, 'Xóa bài viết thất bại')
 }
 
 export const loginUser = async (email: string, password: string) => {
@@ -171,12 +166,7 @@ export const loginUser = async (email: string, password: string) => {
     body: JSON.stringify({ email, password })
   })
 
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.message || 'Đăng nhập thất bại')
-  }
-
-  return res.json()
+  return handleResponse<{ token: string; user: User }>(res, 'Đăng nhập thất bại')
 }
 
 export const registerUser = async (username: string, email: string, password: string) => {
@@ -188,10 +178,51 @@ export const registerUser = async (username: string, email: string, password: st
     body: JSON.stringify({ username, email, password })
   })
 
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.message || 'Đăng ký thất bại')
-  }
-
-  return res.json()
+  return handleResponse<{ token: string; user: User }>(res, 'Đăng ký thất bại')
 }
+
+export const getMe = async (): Promise<{ user: User }> => {
+  const res = await fetch('http://localhost:5000/api/auth/me', {
+    headers: {
+      ...getAuthHeaders()
+    }
+  })
+
+  return handleResponse<{ user: User }>(res, 'Xác thực thất bại')
+}
+
+export interface BlogStats {
+  totalBlogs: number
+  totalViews: number
+  totalLikes: number
+}
+
+export interface MyBlogsResponse {
+  blogs: Blog[]
+  stats: BlogStats
+}
+
+export const getMyBlogs = async (): Promise<MyBlogsResponse> => {
+  const res = await fetch(`${API}/user/me`, {
+    headers: {
+      ...getAuthHeaders()
+    }
+  })
+
+  return handleResponse<MyBlogsResponse>(res, 'Lấy danh sách bài viết thất bại')
+}
+
+export const deleteComment = async (id: string): Promise<{ message: string }> => {
+  const res = await fetch(`http://localhost:5000/api/comments/${id}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders()
+    }
+  })
+
+  return handleResponse<{ message: string }>(res, 'Xóa bình luận thất bại')
+}
+
+
+
+

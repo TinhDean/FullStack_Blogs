@@ -1,13 +1,17 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { loginUser } from '../services/blogService'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const Login = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const from = (location.state as any)?.from?.pathname || '/'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,15 +24,9 @@ const Login = () => {
 
     try {
       setLoading(true)
-      const data = await loginUser(email.trim(), password.trim())
-
-      // Lưu trữ thông tin đăng nhập
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-
+      await login(email.trim(), password.trim())
       setLoading(false)
-      // Chuyển hướng về trang chủ và reload
-      window.location.href = '/'
+      navigate(from, { replace: true })
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản.')

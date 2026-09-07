@@ -1,33 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getBlogById, deleteBlog } from '../services/blogService'
-import type { Blog, Comment, User } from '../services/blogService'
+import { getBlogById, deleteBlog, deleteComment } from '../services/blogService'
+import type { Blog, Comment } from '../services/blogService'
 import { getComments, createComment } from '../services/blogService'
 import { likeBlog, increaseView } from '../services/blogService'
+import { useAuth } from '../context/AuthContext'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 import NotFound from './NotFound'
 
 const BlogDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState('')
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [currentUser] = useState<User | null>(() => {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      try {
-        return JSON.parse(userStr)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-    return null
-  })
   const [deleting, setDeleting] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteModalComment, setDeleteModalComment] = useState<Comment | null>(null)
+  const [deletingComment, setDeletingComment] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -47,7 +41,7 @@ const BlogDetail = () => {
 
         // lấy blog
         const blogData = await getBlogById(id)
-        if (!blogData || blogData.message || !blogData.title) {
+        if (!blogData || !blogData.title) {
           setNotFound(true)
           setLoading(false)
           return
@@ -59,6 +53,7 @@ const BlogDetail = () => {
         setComments(commentData)
       } catch (error) {
         console.error('Lỗi load dữ liệu:', error)
+        setNotFound(true)
       } finally {
         setLoading(false)
       }
@@ -125,6 +120,28 @@ const BlogDetail = () => {
       triggerToast(error instanceof Error ? error.message : 'Xóa bài viết thất bại.', 'error')
       setDeleting(false)
       setShowDeleteModal(false)
+    }
+  }
+
+  // 🗑️ DELETE COMMENT
+  const handleDeleteCommentClick = (comment: Comment) => {
+    setDeleteModalComment(comment)
+  }
+
+  const handleDeleteCommentConfirm = async () => {
+    if (!deleteModalComment) return
+
+    try {
+      setDeletingComment(true)
+      await deleteComment(deleteModalComment._id)
+      setComments((prev) => prev.filter((c) => c._id !== deleteModalComment._id))
+      setDeleteModalComment(null)
+      triggerToast('Đã xóa bình luận thành công!', 'success')
+    } catch (error) {
+      console.error('Lỗi xóa bình luận:', error)
+      triggerToast(error instanceof Error ? error.message : 'Xóa bình luận thất bại.', 'error')
+    } finally {
+      setDeletingComment(false)
     }
   }
 
@@ -245,8 +262,8 @@ const BlogDetail = () => {
         <hr className='detail-divider' />
 
         {/* content */}
-        <div className='detail-content' style={{ whiteSpace: 'pre-wrap' }}>
-          {blog.content}
+        <div className='detail-content'>
+          <MarkdownRenderer content={blog.content} />
         </div>
 
         {/* actions */}
@@ -359,12 +376,38 @@ const BlogDetail = () => {
                 Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ cảm nghĩ!
               </p>
             ) : (
-              comments.map((c) => (
-                <div key={c._id} className='comment-item'>
-                  <span className='comment-item-user'>{c.username}</span>
-                  <p className='comment-item-content'>{c.content}</p>
-                </div>
-              ))
+              comments.map((c) => {
+                const canDelete =
+                  currentUser &&
+                  (c.userId === currentUser.id || currentUser.role === 'admin')
+
+                return (
+                  <div key={c._id} className='comment-item'>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span className='comment-item-user'>{c.username}</span>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteCommentClick(c)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--danger)',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            padding: '2px 8px',
+                            borderRadius: '4px'
+                          }}
+                          title='Xóa bình luận'
+                        >
+                          Xóa
+                        </button>
+                      )}
+                    </div>
+                    <p className='comment-item-content'>{c.content}</p>
+                  </div>
+                )
+              })
             )}
           </div>
         </div>
@@ -373,7 +416,7 @@ const BlogDetail = () => {
       {showDeleteModal && (
         <div className='modal-overlay'>
           <div className='modal-card'>
-            <h3 className='modal-title'>Xác nhận xóa</h3>
+            <h3 className='modal-title'>Xác nhận xóa bài viết</h3>
             <p className='modal-text'>
               Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.
             </p>
@@ -382,6 +425,25 @@ const BlogDetail = () => {
                 {deleting ? 'Đang xóa...' : 'Xóa bài viết'}
               </button>
               <button onClick={() => setShowDeleteModal(false)} className='btn btn-secondary' disabled={deleting}>
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteModalComment && (
+        <div className='modal-overlay'>
+          <div className='modal-card'>
+            <h3 className='modal-title'>Xác nhận xóa bình luận</h3>
+            <p className='modal-text'>
+              Bạn có chắc chắn muốn xóa bình luận này không? Hành động này không thể hoàn tác.
+            </p>
+            <div className='modal-actions'>
+              <button onClick={handleDeleteCommentConfirm} className='btn btn-danger' disabled={deletingComment}>
+                {deletingComment ? 'Đang xóa...' : 'Xóa bình luận'}
+              </button>
+              <button onClick={() => setDeleteModalComment(null)} className='btn btn-secondary' disabled={deletingComment}>
                 Hủy
               </button>
             </div>

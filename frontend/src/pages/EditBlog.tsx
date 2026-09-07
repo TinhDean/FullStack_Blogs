@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getBlogById, updateBlog } from '../services/blogService'
+import { useAuth } from '../context/AuthContext'
+import MarkdownEditor from '../components/MarkdownEditor'
 
 const EditBlog = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('Công nghệ')
@@ -27,9 +30,6 @@ const EditBlog = () => {
         }
 
         // Kiểm tra quyền sửa (phải là người viết hoặc admin)
-        const userStr = localStorage.getItem('user')
-        const currentUser = userStr ? JSON.parse(userStr) : null
-
         if (!currentUser) {
           setError('Bạn cần đăng nhập để chỉnh sửa bài viết.')
           setLoading(false)
@@ -56,8 +56,10 @@ const EditBlog = () => {
       }
     }
 
-    fetchBlog()
-  }, [id])
+    if (currentUser) {
+      fetchBlog()
+    }
+  }, [id, currentUser])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -173,16 +175,14 @@ const EditBlog = () => {
 
             <div className='form-group'>
               <label htmlFor='content' className='form-label'>
-                Nội dung bài viết
+                Nội dung bài viết (Markdown)
               </label>
-              <textarea
-                id='content'
+              <MarkdownEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder='Nhập nội dung mới cho bài viết...'
+                onChange={setContent}
+                placeholder='Nhập nội dung bài viết hỗ trợ Markdown (tiêu đề #, in đậm **, code block ```, danh sách, link...)...'
                 disabled={submitting}
-                rows={12}
-                className='form-textarea'
+                minHeight='360px'
               />
             </div>
 

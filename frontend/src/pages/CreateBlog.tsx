@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createBlog } from '../services/blogService'
+import MarkdownEditor from '../components/MarkdownEditor'
 
 const CreateBlog = () => {
   const navigate = useNavigate()
@@ -9,13 +10,6 @@ const CreateBlog = () => {
   const [category, setCategory] = useState('Công nghệ')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('user')
-    if (!userStr) {
-      navigate('/login')
-    }
-  }, [navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,16 +120,14 @@ const CreateBlog = () => {
 
           <div className='form-group'>
             <label htmlFor='content' className='form-label'>
-              Nội dung bài viết
+              Nội dung bài viết (Markdown)
             </label>
-            <textarea
-              id='content'
+            <MarkdownEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder='Viết nội dung bài viết ở đây...'
+              onChange={setContent}
+              placeholder='Nhập nội dung bài viết hỗ trợ Markdown (tiêu đề #, in đậm **, code block ```, danh sách, link...)...'
               disabled={loading}
-              rows={12}
-              className='form-textarea'
+              minHeight='360px'
             />
           </div>
 
