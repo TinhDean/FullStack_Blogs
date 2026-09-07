@@ -4,8 +4,8 @@ import app from './app';
 
 dotenv.config(); // luôn trên cùng
 
-// debug env
-console.log('ENV CHECK:', process.env.MONGO_URI);
+// Log environment mode (safe, without exposing database credentials)
+console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 
 // connect DB
 connectDB();
