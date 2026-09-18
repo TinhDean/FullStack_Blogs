@@ -30,7 +30,8 @@ export interface User {
   role: string
 }
 
-const API = 'http://localhost:5000/api/blogs'
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/+$/, '')
+const API = `${BASE_URL}/blogs`
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem('token')
@@ -71,7 +72,7 @@ export const getBlogById = async (id: string): Promise<Blog> => {
 }
 
 export const likeBlog = async (id: string) => {
-  const res = await fetch(`http://localhost:5000/api/blogs/${id}/like`, {
+  const res = await fetch(`${BASE_URL}/blogs/${id}/like`, {
     method: 'PATCH'
   })
   return handleResponse<Blog>(res, 'Thích bài viết thất bại')
@@ -86,19 +87,19 @@ export const increaseView = async (id: string) => {
 }
 
 export const searchBlogs = async (keyword: string): Promise<Blog[]> => {
-  const res = await fetch(`http://localhost:5000/api/blogs/search?search=${encodeURIComponent(keyword)}`)
+  const res = await fetch(`${BASE_URL}/blogs/search?search=${encodeURIComponent(keyword)}`)
 
   return handleResponse<Blog[]>(res, 'Tìm kiếm bài viết thất bại')
 }
 
 export const getComments = async (blogId: string): Promise<Comment[]> => {
-  const res = await fetch(`http://localhost:5000/api/comments/${blogId}`)
+  const res = await fetch(`${BASE_URL}/comments/${blogId}`)
 
   return handleResponse<Comment[]>(res, 'Lấy danh sách bình luận thất bại')
 }
 
 export const createComment = async (blogId: string, content: string): Promise<Comment> => {
-  const res = await fetch('http://localhost:5000/api/comments', {
+  const res = await fetch(`${BASE_URL}/comments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -161,7 +162,7 @@ export const deleteBlog = async (id: string): Promise<{ message: string }> => {
 }
 
 export const loginUser = async (email: string, password: string) => {
-  const res = await fetch('http://localhost:5000/api/auth/login', {
+  const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -173,7 +174,7 @@ export const loginUser = async (email: string, password: string) => {
 }
 
 export const registerUser = async (username: string, email: string, password: string) => {
-  const res = await fetch('http://localhost:5000/api/auth/register', {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -185,7 +186,7 @@ export const registerUser = async (username: string, email: string, password: st
 }
 
 export const getMe = async (): Promise<{ user: User }> => {
-  const res = await fetch('http://localhost:5000/api/auth/me', {
+  const res = await fetch(`${BASE_URL}/auth/me`, {
     headers: {
       ...getAuthHeaders()
     }
@@ -216,7 +217,7 @@ export const getMyBlogs = async (): Promise<MyBlogsResponse> => {
 }
 
 export const deleteComment = async (id: string): Promise<{ message: string }> => {
-  const res = await fetch(`http://localhost:5000/api/comments/${id}`, {
+  const res = await fetch(`${BASE_URL}/comments/${id}`, {
     method: 'DELETE',
     headers: {
       ...getAuthHeaders()
