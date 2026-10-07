@@ -4,43 +4,23 @@ const NotFound = () => {
   const navigate = useNavigate()
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-        textAlign: 'center',
-        padding: '24px'
-      }}
-    >
-      <div style={{ fontSize: '72px', marginBottom: '16px' }}>🕸️</div>
-      <h1
-        style={{
-          fontSize: '36px',
-          fontWeight: '900',
-          color: 'var(--text-title)',
-          marginBottom: '12px',
-          letterSpacing: '-1px'
-        }}
-      >
-        404 - Không tìm thấy trang
-      </h1>
-      <p
-        style={{
-          fontSize: '16px',
-          color: 'var(--text-muted)',
-          maxWidth: '460px',
-          marginBottom: '28px',
-          lineHeight: '1.6'
-        }}
-      >
-        Trang bạn đang tìm kiếm không tồn tại, đã bị xóa hoặc đã chuyển sang địa chỉ khác.
-      </p>
-      <button onClick={() => navigate('/')} className='btn btn-primary'>
-        Quay lại trang chủ
-      </button>
+    <div className='notfound-page'>
+      <div className='notfound-card'>
+        <div className='notfound-icon'>🕸️</div>
+        <span className='notfound-code'>404 ERROR</span>
+        <h1 className='notfound-title'>Không tìm thấy trang yêu cầu</h1>
+        <p className='notfound-desc'>
+          Trang bạn đang truy cập không tồn tại, đã bị xóa hoặc liên kết bạn theo dõi có thể đã thay đổi.
+        </p>
+        <div className='notfound-actions'>
+          <button onClick={() => navigate('/')} className='btn btn-primary btn-lg'>
+            <span>Về trang chủ Spiderum</span>
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2'>
+              <path d='M5 12h14M12 5l7 7-7 7' />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

@@ -57,7 +57,11 @@ const parseInline = (text: string): string => {
  */
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
   if (!content || !content.trim()) {
-    return <div className={`markdown-body ${className}`}><p className="md-empty">Chưa có nội dung.</p></div>
+    return (
+      <div className={`markdown-body ${className}`}>
+        <p className='md-empty'>Chưa có nội dung.</p>
+      </div>
+    )
   }
 
   const lines = content.split('\n')
@@ -79,11 +83,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       i++ // Skip closing ```
       const rawCode = codeLines.join('\n')
       elements.push(
-        <div key={`code-${i}`} className="md-code-block">
-          <div className="md-code-header">
-            <span className="md-code-lang">{language}</span>
+        <div key={`code-${i}`} className='md-code-block'>
+          <div className='md-code-header'>
+            <span className='md-code-lang'>{language}</span>
           </div>
-          <pre className="md-code-pre">
+          <pre className='md-code-pre'>
             <code>{rawCode}</code>
           </pre>
         </div>
@@ -118,18 +122,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       }
       const parsedQuote = quoteLines.map((l) => parseInline(l)).join('<br />')
       elements.push(
-        <blockquote
-          key={`quote-${i}`}
-          className="md-blockquote"
-          dangerouslySetInnerHTML={{ __html: parsedQuote }}
-        />
+        <blockquote key={`quote-${i}`} className='md-blockquote' dangerouslySetInnerHTML={{ __html: parsedQuote }} />
       )
       continue
     }
 
     // 4. Horizontal Rule: --- or ***
     if (/^(---|---|\*\*\*)\s*$/.test(line.trim())) {
-      elements.push(<hr key={`hr-${i}`} className="md-hr" />)
+      elements.push(<hr key={`hr-${i}`} className='md-hr' />)
       i++
       continue
     }
@@ -142,7 +142,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
         i++
       }
       elements.push(
-        <ul key={`ul-${i}`} className="md-ul">
+        <ul key={`ul-${i}`} className='md-ul'>
           {listItems.map((item, idx) => (
             <li key={idx} dangerouslySetInnerHTML={{ __html: parseInline(item) }} />
           ))}
@@ -159,7 +159,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
         i++
       }
       elements.push(
-        <ol key={`ol-${i}`} className="md-ol">
+        <ol key={`ol-${i}`} className='md-ol'>
           {listItems.map((item, idx) => (
             <li key={idx} dangerouslySetInnerHTML={{ __html: parseInline(item) }} />
           ))}
@@ -190,13 +190,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       i++
     }
     const parsedPara = paraLines.map((l) => parseInline(l)).join('<br />')
-    elements.push(
-      <p
-        key={`para-${i}`}
-        className="md-p"
-        dangerouslySetInnerHTML={{ __html: parsedPara }}
-      />
-    )
+    elements.push(<p key={`para-${i}`} className='md-p' dangerouslySetInnerHTML={{ __html: parsedPara }} />)
   }
 
   return <div className={`markdown-body ${className}`}>{elements}</div>

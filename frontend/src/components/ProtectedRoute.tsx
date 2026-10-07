@@ -23,9 +23,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         }}
       >
         <div className='spinner' />
-        <p style={{ color: 'var(--text-muted)', fontSize: '15px', fontWeight: 500 }}>
-          Đang kiểm tra quyền truy cập...
-        </p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '15px', fontWeight: 500 }}>Đang kiểm tra quyền truy cập...</p>
       </div>
     )
   }

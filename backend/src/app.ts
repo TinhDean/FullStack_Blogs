@@ -9,10 +9,13 @@ import errorMiddleware from "./middlewares/error.middleware"
 const app = express();
 
 // CORS Configuration
+// FRONTEND_URL accepts a comma-separated list of allowed origins (e.g. the Vercel domain).
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map((url) => url.trim()) : [])
+  ...(process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((url) => url.trim().replace(/\/+$/, ''))
+    : [])
 ];
 
 app.use(
@@ -27,13 +30,14 @@ app.use(
       if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
         return callback(null, true);
       }
-      return callback(null, true); // Permissive fallback to prevent breaking cross-domain requests
+      // Unknown origin: respond without CORS headers so the browser blocks the request
+      return callback(null, false);
     },
     credentials: true
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // Health Check Endpoint (for Render / Railway / uptime monitors)
 app.get("/api/health", (req, res) => {

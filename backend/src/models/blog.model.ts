@@ -9,6 +9,8 @@ export interface BlogDocument extends Document {
   views: number;
   likes: number;
   isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const BlogSchema = new Schema(

@@ -8,7 +8,10 @@ import {
   updateBlog,
   deleteBlog,
   softDeleteBlog,
-  getMyBlogs
+  getMyBlogs,
+  likeBlog,
+  increaseView,
+  searchBlogs
 } from './blog.controller';
 
 import Blog from '../models/blog.model';
@@ -355,7 +358,7 @@ describe('Blog Controller', () => {
       });
     });
 
-    it('should return 500 if database error occurs', async () => {
+    it('should forward database errors to the global error handler', async () => {
       const req = {
         user: { userId: 'user123' }
       } as any;
@@ -364,12 +367,193 @@ describe('Blog Controller', () => {
       const mockSort = vi.fn().mockRejectedValue(new Error('Database query failure'));
       (Blog.find as any).mockReturnValue({ sort: mockSort });
 
-      await getMyBlogs(req, res);
+      await expect(getMyBlogs(req, res)).rejects.toThrow('Database query failure');
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Database query failure'
+  describe('validation & authorization', () => {
+    it('BR-04: should return 400 when creating a blog with blank title', async () => {
+      const req = {
+        body: { title: '   ', content: 'Content' },
+        user: { userId: 'user123' }
+      } as any;
+      const res = mockResponse();
+
+      await createBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(Blog.create).not.toHaveBeenCalled();
+    });
+
+    it('should ignore protected fields (author, views, likes, isDeleted) when creating', async () => {
+      const req = {
+        body: { title: 'T', content: 'C', author: 'hacker', views: 999, likes: 999, isDeleted: true },
+        user: { userId: 'user123' }
+      } as any;
+      const res = mockResponse();
+      (Blog.create as any).mockResolvedValue({});
+
+      await createBlog(req, res);
+
+      expect(Blog.create).toHaveBeenCalledWith({ title: 'T', content: 'C', author: 'user123' });
+    });
+
+    it('should ignore protected fields when updating', async () => {
+      const req = {
+        params: { id: '1' },
+        body: { title: 'New', likes: 10000, author: 'other' },
+        user: { userId: 'user123', role: 'user' }
+      } as any;
+      const res = mockResponse();
+      (Blog.findById as any).mockResolvedValue({ _id: '1', author: 'user123' });
+      (Blog.findByIdAndUpdate as any).mockResolvedValue({ title: 'New' });
+
+      await updateBlog(req, res);
+
+      expect(Blog.findByIdAndUpdate).toHaveBeenCalledWith('1', { title: 'New' }, { new: true, runValidators: true });
+    });
+
+    it('BR-01: should return 403 when a user updates another user blog', async () => {
+      const req = {
+        params: { id: '1' },
+        body: { title: 'Hack' },
+        user: { userId: 'attacker', role: 'user' }
+      } as any;
+      const res = mockResponse();
+      (Blog.findById as any).mockResolvedValue({ _id: '1', author: 'owner' });
+
+      await updateBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(Blog.findByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('BR-01: should allow admin to delete any blog', async () => {
+      const req = {
+        params: { id: '1' },
+        user: { userId: 'admin1', role: 'admin' }
+      } as any;
+      const res = mockResponse();
+      (Blog.findById as any).mockResolvedValue({ _id: '1', author: 'owner' });
+      (Blog.findByIdAndDelete as any).mockResolvedValue({});
+
+      await deleteBlog(req, res);
+
+      expect(Blog.findByIdAndDelete).toHaveBeenCalledWith('1');
+      expect(res.json).toHaveBeenCalledWith({ message: 'Delete blog successfully' });
+    });
+
+    it('should return 403 when a user deletes another user blog', async () => {
+      const req = {
+        params: { id: '1' },
+        user: { userId: 'attacker', role: 'user' }
+      } as any;
+      const res = mockResponse();
+      (Blog.findById as any).mockResolvedValue({ _id: '1', author: 'owner' });
+
+      await deleteBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(Blog.findByIdAndDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('likeBlog & increaseView', () => {
+    it('TC-INT-02: should increase likes by 1', async () => {
+      const req = { params: { id: '1' } } as any;
+      const res = mockResponse();
+      (Blog.findOneAndUpdate as any).mockResolvedValue({ _id: '1', likes: 6 });
+
+      await likeBlog(req, res);
+
+      expect(Blog.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: '1', isDeleted: false },
+        { $inc: { likes: 1 } },
+        { new: true }
+      );
+      expect(res.json).toHaveBeenCalledWith({ _id: '1', likes: 6 });
+    });
+
+    it('should return 404 when liking a missing blog', async () => {
+      const req = { params: { id: '404' } } as any;
+      const res = mockResponse();
+      (Blog.findOneAndUpdate as any).mockResolvedValue(null);
+
+      await likeBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it('TC-INT-01: should increase views by 1', async () => {
+      const req = { params: { id: '1' } } as any;
+      const res = mockResponse();
+      (Blog.findOneAndUpdate as any).mockResolvedValue({ _id: '1', views: 11 });
+
+      await increaseView(req, res);
+
+      expect(Blog.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: '1', isDeleted: false },
+        { $inc: { views: 1 } },
+        { new: true }
+      );
+      expect(res.json).toHaveBeenCalledWith({ _id: '1', views: 11 });
+    });
+
+    it('should return 404 when viewing a missing blog', async () => {
+      const req = { params: { id: '404' } } as any;
+      const res = mockResponse();
+      (Blog.findOneAndUpdate as any).mockResolvedValue(null);
+
+      await increaseView(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('searchBlogs', () => {
+    const mockSearchChain = (result: unknown[]) => {
+      const mockSort = vi.fn().mockResolvedValue(result);
+      const mockPopulate = vi.fn().mockReturnValue({ sort: mockSort });
+      (Blog.find as any).mockReturnValue({ populate: mockPopulate });
+      return { mockSort, mockPopulate };
+    };
+
+    it('US-01: should search blogs by title (case-insensitive)', async () => {
+      const req = { query: { search: 'react' } } as any;
+      const res = mockResponse();
+      const { mockPopulate } = mockSearchChain([{ title: 'React Hooks' }]);
+
+      await searchBlogs(req, res);
+
+      expect(Blog.find).toHaveBeenCalledWith({
+        title: { $regex: 'react', $options: 'i' },
+        isDeleted: false
       });
+      expect(mockPopulate).toHaveBeenCalledWith('author', 'username');
+      expect(res.json).toHaveBeenCalledWith([{ title: 'React Hooks' }]);
+    });
+
+    it('should escape regex special characters in the keyword', async () => {
+      const req = { query: { search: 'C++ (basic)' } } as any;
+      const res = mockResponse();
+      mockSearchChain([]);
+
+      await searchBlogs(req, res);
+
+      expect(Blog.find).toHaveBeenCalledWith({
+        title: { $regex: 'C\\+\\+ \\(basic\\)', $options: 'i' },
+        isDeleted: false
+      });
+    });
+
+    it('should forward database errors to the global error handler', async () => {
+      const req = { query: { search: 'x' } } as any;
+      const res = mockResponse();
+      const mockSort = vi.fn().mockRejectedValue(new Error('Search failed'));
+      (Blog.find as any).mockReturnValue({ populate: vi.fn().mockReturnValue({ sort: mockSort }) });
+
+      await expect(searchBlogs(req, res)).rejects.toThrow('Search failed');
     });
   });
 });

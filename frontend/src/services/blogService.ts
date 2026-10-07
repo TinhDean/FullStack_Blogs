@@ -52,7 +52,14 @@ const handleResponse = async <T>(res: Response, fallbackMessage: string): Promis
   return res.json()
 }
 
-export const getAllBlogs = async (category?: string, page?: number, limit?: number) => {
+export interface PaginatedBlogs {
+  blogs: Blog[]
+  currentPage: number
+  totalPages: number
+  totalBlogs: number
+}
+
+export const getAllBlogs = async (category?: string, page?: number, limit?: number): Promise<PaginatedBlogs> => {
   const params = new URLSearchParams()
   if (category) params.append('category', category)
   if (page) params.append('page', String(page))
@@ -62,7 +69,7 @@ export const getAllBlogs = async (category?: string, page?: number, limit?: numb
   const url = queryString ? `${API}?${queryString}` : API
   const res = await fetch(url)
 
-  return handleResponse<any>(res, 'Lấy danh sách bài viết thất bại')
+  return handleResponse<PaginatedBlogs>(res, 'Lấy danh sách bài viết thất bại')
 }
 
 export const getBlogById = async (id: string): Promise<Blog> => {
@@ -114,7 +121,12 @@ export const createComment = async (blogId: string, content: string): Promise<Co
   return handleResponse<Comment>(res, 'Gửi comment thất bại')
 }
 
-export const createBlog = async (title: string, content: string, category: string, thumbnail?: string): Promise<Blog> => {
+export const createBlog = async (
+  title: string,
+  content: string,
+  category: string,
+  thumbnail?: string
+): Promise<Blog> => {
   const res = await fetch(API, {
     method: 'POST',
     headers: {
@@ -132,7 +144,13 @@ export const createBlog = async (title: string, content: string, category: strin
   return handleResponse<Blog>(res, 'Tạo bài viết thất bại')
 }
 
-export const updateBlog = async (id: string, title: string, content: string, category: string, thumbnail?: string): Promise<Blog> => {
+export const updateBlog = async (
+  id: string,
+  title: string,
+  content: string,
+  category: string,
+  thumbnail?: string
+): Promise<Blog> => {
   const res = await fetch(`${API}/${id}`, {
     method: 'PUT',
     headers: {
@@ -226,7 +244,3 @@ export const deleteComment = async (id: string): Promise<{ message: string }> =>
 
   return handleResponse<{ message: string }>(res, 'Xóa bình luận thất bại')
 }
-
-
-
-

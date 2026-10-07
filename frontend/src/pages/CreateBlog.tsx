@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { createBlog } from '../services/blogService'
 import MarkdownEditor from '../components/MarkdownEditor'
 
+const CATEGORIES = [
+  { name: 'Công nghệ', icon: '💻' },
+  { name: 'Lập trình', icon: '⚙️' },
+  { name: 'AI', icon: '🤖' },
+  { name: 'Cuộc sống', icon: '🌱' }
+]
+
 const CreateBlog = () => {
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
@@ -17,7 +24,6 @@ const CreateBlog = () => {
     e.preventDefault()
     setError('')
 
-    // Validation cơ bản
     if (!title.trim()) {
       setError('Tiêu đề bài viết không được để trống.')
       return
@@ -35,7 +41,6 @@ const CreateBlog = () => {
       setLoading(true)
       const newBlog = await createBlog(title.trim(), content.trim(), category, thumbnail.trim())
       setLoading(false)
-      // Điều hướng về trang chi tiết bài viết mới tạo
       if (newBlog && newBlog._id) {
         navigate(`/blog/${newBlog._id}`)
       } else {
@@ -49,84 +54,83 @@ const CreateBlog = () => {
   }
 
   return (
-    <div className='form-layout'>
-      <button onClick={() => navigate('/')} className='btn btn-secondary detail-back-btn'>
-        <svg
-          width='14'
-          height='14'
-          viewBox='0 0 24 24'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth='2.5'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        >
-          <line x1='19' y1='12' x2='5' y2='12' />
-          <polyline points='12 19 5 12 12 5' />
-        </svg>
-        Quay lại trang chủ
-      </button>
+    <div className='form-page'>
+      <div className='form-top-bar'>
+        <button onClick={() => navigate('/')} className='btn btn-ghost'>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2'>
+            <line x1='19' y1='12' x2='5' y2='12' />
+            <polyline points='12 19 5 12 12 5' />
+          </svg>
+          <span>Quay lại trang chủ</span>
+        </button>
+      </div>
 
-      <div className='form-card'>
-        <h1 className='form-title'>Viết bài mới</h1>
+      <div className='editor-studio-card'>
+        <div className='studio-header'>
+          <div>
+            <span className='section-tag'>Studio sáng tạo</span>
+            <h1 className='studio-title'>Soạn thảo bài viết mới</h1>
+            <p className='studio-subtitle'>
+              Chia sẻ kiến thức lập trình, câu chuyện công nghệ và góc nhìn của bạn đến cộng đồng.
+            </p>
+          </div>
+        </div>
 
         {error && (
           <div className='alert-danger'>
-            <svg
-              width='16'
-              height='16'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2.5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <circle cx='12' cy='12' r='10' />
-              <line x1='12' y1='8' x2='12' y2='12' />
-              <line x1='12' y1='16' x2='12.01' y2='16' />
-            </svg>
-            {error}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className='studio-form'>
+          {/* Title Input */}
           <div className='form-group'>
             <label htmlFor='title' className='form-label'>
-              Tiêu đề bài viết
+              Tiêu đề bài viết <span className='required-star'>*</span>
             </label>
             <input
               id='title'
               type='text'
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder='Nhập tiêu đề ấn tượng cho bài viết...'
+              placeholder='Ví dụ: Tối ưu hóa hiệu năng React 19 với Server Components...'
               disabled={loading}
-              className='input'
+              className='input input-lg'
             />
           </div>
 
+          {/* Category Selector */}
           <div className='form-group'>
-            <label htmlFor='category' className='form-label'>
-              Danh mục bài viết
+            <label className='form-label'>
+              Chuyên mục bài viết <span className='required-star'>*</span>
             </label>
-            <select
-              id='category'
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              disabled={loading}
-              className='form-select'
-            >
-              <option value='Công nghệ'>💻 Công nghệ</option>
-              <option value='Lập trình'>⚙️ Lập trình</option>
-              <option value='Cuộc sống'>🌱 Cuộc sống</option>
-              <option value='AI'>🤖 AI</option>
-            </select>
+            <div className='category-selector-group'>
+              {CATEGORIES.map((cat) => {
+                const isSelected = category === cat.name
+                return (
+                  <button
+                    key={cat.name}
+                    type='button'
+                    onClick={() => setCategory(cat.name)}
+                    className={`category-pill-btn ${isSelected ? 'selected' : ''}`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
+          {/* Thumbnail URL Input */}
           <div className='form-group'>
-            <label htmlFor='thumbnail' className='form-label' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Ảnh bìa (Thumbnail URL - Tùy chọn)</span>
+            <div className='form-label-row'>
+              <label htmlFor='thumbnail' className='form-label'>
+                Ảnh bìa (Thumbnail URL - Tùy chọn)
+              </label>
               {thumbnail && (
                 <button
                   type='button'
@@ -135,12 +139,11 @@ const CreateBlog = () => {
                     setPreviewError(false)
                   }}
                   className='btn-text-action'
-                  title='Xóa ảnh bìa'
                 >
-                  ✕ Xóa URL ảnh
+                  ✕ Xóa ảnh
                 </button>
               )}
-            </label>
+            </div>
             <input
               id='thumbnail'
               type='url'
@@ -149,22 +152,24 @@ const CreateBlog = () => {
                 setThumbnail(e.target.value)
                 setPreviewError(false)
               }}
-              placeholder='Nhập đường dẫn ảnh trực tiếp (ví dụ: https://images.unsplash.com/...)...'
+              placeholder='Nhập đường dẫn ảnh trực tiếp (ví dụ: https://images.unsplash.com/...)'
               disabled={loading}
               className='input'
             />
+
+            {/* Thumbnail Live Preview */}
             {thumbnail.trim() && (
-              <div className='thumbnail-preview-container'>
-                <div className='thumbnail-preview-label'>Xem trước ảnh bìa:</div>
+              <div className='thumbnail-preview-box'>
+                <span className='thumbnail-preview-title'>Xem trước ảnh bìa:</span>
                 {previewError ? (
-                  <div className='thumbnail-preview-error'>
-                    ⚠️ Không thể tải ảnh từ URL này. Vui lòng kiểm tra lại đường dẫn hợp lệ.
+                  <div className='thumbnail-preview-failed'>
+                    <span>⚠️ Không thể tải ảnh từ URL này. Vui lòng kiểm tra lại liên kết.</span>
                   </div>
                 ) : (
                   <img
                     src={thumbnail.trim()}
-                    alt='Xem trước ảnh bìa'
-                    className='thumbnail-preview-img'
+                    alt='Preview'
+                    className='thumbnail-preview-image'
                     onError={() => setPreviewError(true)}
                   />
                 )}
@@ -172,27 +177,45 @@ const CreateBlog = () => {
             )}
           </div>
 
+          {/* Markdown Content Editor */}
           <div className='form-group'>
-            <label htmlFor='content' className='form-label'>
-              Nội dung bài viết (Markdown)
+            <label className='form-label'>
+              Nội dung bài viết (Markdown) <span className='required-star'>*</span>
             </label>
             <MarkdownEditor
               value={content}
               onChange={setContent}
-              placeholder='Nhập nội dung bài viết hỗ trợ Markdown (tiêu đề #, in đậm **, code block ```, danh sách, link...)...'
+              placeholder='Bắt đầu soạn thảo nội dung với cú pháp Markdown... Hỗ trợ code blocks, trích dẫn, ảnh, liên kết...'
               disabled={loading}
-              minHeight='360px'
+              rows={16}
             />
           </div>
 
-          <button
-            type='submit'
-            disabled={loading}
-            className='btn btn-primary'
-            style={{ padding: '10px 24px', fontSize: '15px' }}
-          >
-            {loading ? 'Đang gửi...' : 'Xuất bản bài viết'}
-          </button>
+          {/* Actions */}
+          <div className='studio-footer-actions'>
+            <button type='button' onClick={() => navigate('/')} className='btn btn-secondary' disabled={loading}>
+              Hủy bỏ
+            </button>
+            <button
+              type='submit'
+              disabled={loading || !title.trim() || !content.trim()}
+              className='btn btn-primary btn-lg'
+            >
+              {loading ? (
+                <>
+                  <span className='spinner-inline' />
+                  <span>Đang xuất bản bài viết...</span>
+                </>
+              ) : (
+                <>
+                  <span>Xuất bản bài viết</span>
+                  <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2'>
+                    <path d='M5 12h14M12 5l7 7-7 7' />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>

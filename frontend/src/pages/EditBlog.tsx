@@ -4,6 +4,13 @@ import { getBlogById, updateBlog } from '../services/blogService'
 import { useAuth } from '../context/AuthContext'
 import MarkdownEditor from '../components/MarkdownEditor'
 
+const CATEGORIES = [
+  { name: 'Công nghệ', icon: '💻' },
+  { name: 'Lập trình', icon: '⚙️' },
+  { name: 'AI', icon: '🤖' },
+  { name: 'Cuộc sống', icon: '🌱' }
+]
+
 const EditBlog = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -31,7 +38,6 @@ const EditBlog = () => {
           return
         }
 
-        // Kiểm tra quyền sửa (phải là người viết hoặc admin)
         if (!currentUser) {
           setError('Bạn cần đăng nhập để chỉnh sửa bài viết.')
           setLoading(false)
@@ -94,174 +100,184 @@ const EditBlog = () => {
 
   if (loading) {
     return (
-      <div className='form-layout'>
-        <div className='loading-state'>
+      <div className='form-page'>
+        <div className='loading-state' style={{ minHeight: '50vh' }}>
           <div className='spinner' />
-          <p>Đang tải nội dung bài viết...</p>
+          <p>Đang tải nội dung bài viết để chỉnh sửa...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className='form-layout'>
-      <button onClick={() => navigate(`/blog/${id}`)} className='btn btn-secondary detail-back-btn'>
-        <svg
-          width='14'
-          height='14'
-          viewBox='0 0 24 24'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth='2.5'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        >
-          <line x1='19' y1='12' x2='5' y2='12' />
-          <polyline points='12 19 5 12 12 5' />
-        </svg>
-        Hủy chỉnh sửa
-      </button>
+    <div className='form-page'>
+      <div className='form-top-bar'>
+        <button onClick={() => navigate(`/blog/${id}`)} className='btn btn-ghost'>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2'>
+            <line x1='19' y1='12' x2='5' y2='12' />
+            <polyline points='12 19 5 12 12 5' />
+          </svg>
+          <span>Quay lại bài viết</span>
+        </button>
+      </div>
 
-      <div className='form-card'>
-        <h1 className='form-title'>Chỉnh sửa bài viết</h1>
+      <div className='editor-studio-card'>
+        <div className='studio-header'>
+          <div>
+            <span className='section-tag'>Chế độ chỉnh sửa</span>
+            <h1 className='studio-title'>Cập nhật bài viết</h1>
+            <p className='studio-subtitle'>
+              Chỉnh sửa thông tin, làm mới hình ảnh hoặc bổ sung kiến thức cho bài viết của bạn.
+            </p>
+          </div>
+        </div>
 
         {error && (
           <div className='alert-danger'>
-            <svg
-              width='16'
-              height='16'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2.5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <circle cx='12' cy='12' r='10' />
-              <line x1='12' y1='8' x2='12' y2='12' />
-              <line x1='12' y1='16' x2='12.01' y2='16' />
-            </svg>
-            {error}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
-        {/* Chỉ hiển thị form nếu không có lỗi phân quyền hoặc lỗi bài viết */}
-        {!error && (
-          <form onSubmit={handleSubmit}>
-            <div className='form-group'>
-              <label htmlFor='title' className='form-label'>
-                Tiêu đề bài viết
-              </label>
-              <input
-                id='title'
-                type='text'
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder='Nhập tiêu đề...'
-                disabled={submitting}
-                className='input'
-              />
-            </div>
+        <form onSubmit={handleSubmit} className='studio-form'>
+          {/* Title */}
+          <div className='form-group'>
+            <label htmlFor='title' className='form-label'>
+              Tiêu đề bài viết <span className='required-star'>*</span>
+            </label>
+            <input
+              id='title'
+              type='text'
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder='Nhập tiêu đề bài viết...'
+              disabled={submitting}
+              className='input input-lg'
+            />
+          </div>
 
-            <div className='form-group'>
-              <label htmlFor='category' className='form-label'>
-                Danh mục bài viết
-              </label>
-              <select
-                id='category'
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                disabled={submitting}
-                className='form-select'
-              >
-                <option value='Công nghệ'>💻 Công nghệ</option>
-                <option value='Lập trình'>⚙️ Lập trình</option>
-                <option value='Cuộc sống'>🌱 Cuộc sống</option>
-                <option value='AI'>🤖 AI</option>
-              </select>
-            </div>
-
-            <div className='form-group'>
-              <label htmlFor='thumbnail' className='form-label' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Ảnh bìa (Thumbnail URL - Tùy chọn)</span>
-                {thumbnail && (
+          {/* Category Selector */}
+          <div className='form-group'>
+            <label className='form-label'>
+              Chuyên mục bài viết <span className='required-star'>*</span>
+            </label>
+            <div className='category-selector-group'>
+              {CATEGORIES.map((cat) => {
+                const isSelected = category === cat.name
+                return (
                   <button
+                    key={cat.name}
                     type='button'
-                    onClick={() => {
-                      setThumbnail('')
-                      setPreviewError(false)
-                    }}
-                    className='btn-text-action'
-                    title='Xóa ảnh bìa'
+                    onClick={() => setCategory(cat.name)}
+                    className={`category-pill-btn ${isSelected ? 'selected' : ''}`}
                   >
-                    ✕ Xóa URL ảnh
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
                   </button>
-                )}
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Thumbnail URL Input */}
+          <div className='form-group'>
+            <div className='form-label-row'>
+              <label htmlFor='thumbnail' className='form-label'>
+                Ảnh bìa (Thumbnail URL - Tùy chọn)
               </label>
-              <input
-                id='thumbnail'
-                type='url'
-                value={thumbnail}
-                onChange={(e) => {
-                  setThumbnail(e.target.value)
-                  setPreviewError(false)
-                }}
-                placeholder='Nhập đường dẫn ảnh trực tiếp (ví dụ: https://images.unsplash.com/...)...'
-                disabled={submitting}
-                className='input'
-              />
-              {thumbnail.trim() && (
-                <div className='thumbnail-preview-container'>
-                  <div className='thumbnail-preview-label'>Xem trước ảnh bìa:</div>
-                  {previewError ? (
-                    <div className='thumbnail-preview-error'>
-                      ⚠️ Không thể tải ảnh từ URL này. Vui lòng kiểm tra lại đường dẫn hợp lệ.
-                    </div>
-                  ) : (
-                    <img
-                      src={thumbnail.trim()}
-                      alt='Xem trước ảnh bìa'
-                      className='thumbnail-preview-img'
-                      onError={() => setPreviewError(true)}
-                    />
-                  )}
-                </div>
+              {thumbnail && (
+                <button
+                  type='button'
+                  onClick={() => {
+                    setThumbnail('')
+                    setPreviewError(false)
+                  }}
+                  className='btn-text-action'
+                >
+                  ✕ Xóa ảnh
+                </button>
               )}
             </div>
+            <input
+              id='thumbnail'
+              type='url'
+              value={thumbnail}
+              onChange={(e) => {
+                setThumbnail(e.target.value)
+                setPreviewError(false)
+              }}
+              placeholder='Nhập đường dẫn ảnh trực tiếp (ví dụ: https://images.unsplash.com/...)'
+              disabled={submitting}
+              className='input'
+            />
 
-            <div className='form-group'>
-              <label htmlFor='content' className='form-label'>
-                Nội dung bài viết (Markdown)
-              </label>
-              <MarkdownEditor
-                value={content}
-                onChange={setContent}
-                placeholder='Nhập nội dung bài viết hỗ trợ Markdown (tiêu đề #, in đậm **, code block ```, danh sách, link...)...'
-                disabled={submitting}
-                minHeight='360px'
-              />
-            </div>
+            {/* Thumbnail Live Preview */}
+            {thumbnail.trim() && (
+              <div className='thumbnail-preview-box'>
+                <span className='thumbnail-preview-title'>Xem trước ảnh bìa:</span>
+                {previewError ? (
+                  <div className='thumbnail-preview-failed'>
+                    <span>⚠️ Không thể tải ảnh từ URL này. Vui lòng kiểm tra lại liên kết.</span>
+                  </div>
+                ) : (
+                  <img
+                    src={thumbnail.trim()}
+                    alt='Preview'
+                    className='thumbnail-preview-image'
+                    onError={() => setPreviewError(true)}
+                  />
+                )}
+              </div>
+            )}
+          </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-              <button
-                type='submit'
-                disabled={submitting}
-                className='btn btn-primary'
-                style={{ padding: '10px 24px', fontSize: '15px' }}
-              >
-                {submitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </button>
-              <button
-                type='button'
-                onClick={() => navigate(`/blog/${id}`)}
-                className='btn btn-secondary'
-                style={{ padding: '10px 24px', fontSize: '15px' }}
-              >
-                Hủy
-              </button>
-            </div>
-          </form>
-        )}
+          {/* Markdown Editor */}
+          <div className='form-group'>
+            <label className='form-label'>
+              Nội dung bài viết (Markdown) <span className='required-star'>*</span>
+            </label>
+            <MarkdownEditor
+              value={content}
+              onChange={setContent}
+              placeholder='Nhập nội dung bài viết...'
+              disabled={submitting}
+              rows={16}
+            />
+          </div>
+
+          {/* Footer Actions */}
+          <div className='studio-footer-actions'>
+            <button
+              type='button'
+              onClick={() => navigate(`/blog/${id}`)}
+              className='btn btn-secondary'
+              disabled={submitting}
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type='submit'
+              disabled={submitting || !title.trim() || !content.trim()}
+              className='btn btn-primary btn-lg'
+            >
+              {submitting ? (
+                <>
+                  <span className='spinner-inline' />
+                  <span>Đang lưu thay đổi...</span>
+                </>
+              ) : (
+                <>
+                  <span>Lưu thay đổi bài viết</span>
+                  <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2'>
+                    <path d='M5 12h14M12 5l7 7-7 7' />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

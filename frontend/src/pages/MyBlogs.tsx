@@ -39,10 +39,6 @@ const MyBlogs = () => {
     fetchBlogs()
   }, [])
 
-  const handleDeleteClick = (blog: Blog) => {
-    setDeleteModalBlog(blog)
-  }
-
   const handleDeleteConfirm = async () => {
     if (!deleteModalBlog) return
 
@@ -86,110 +82,101 @@ const MyBlogs = () => {
   }
 
   return (
-    <div className='myblogs-container'>
-      {/* Toast Notification */}
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
-
+    <div className='myblogs-page'>
       {/* Header */}
-      <div className='myblogs-header'>
+      <div className='myblogs-header-card'>
         <div>
+          <span className='section-tag'>Quản trị cá nhân</span>
           <h1 className='myblogs-title'>Bài viết của tôi</h1>
-          <p className='myblogs-subtitle'>Quản lý các bài viết và theo dõi lượt tương tác từ độc giả</p>
+          <p className='myblogs-subtitle'>
+            Theo dõi hiệu quả tương tác, số lượt xem và quản lý tất cả bài viết bạn đã xuất bản.
+          </p>
         </div>
         <button onClick={() => navigate('/create')} className='btn btn-primary'>
-          <svg
-            width='14'
-            height='14'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2.5'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-          >
+          <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2'>
             <path d='M12 5v14M5 12h14' />
           </svg>
-          Viết bài mới
+          <span>Viết bài mới</span>
         </button>
       </div>
 
       {/* Loading State */}
       {loading && (
-        <div className='loading-state' style={{ minHeight: '40vh' }}>
-          <div className='spinner' />
-          <p>Đang tải danh sách bài viết...</p>
+        <div className='myblogs-skeleton-wrapper'>
+          <div className='skeleton-grid' style={{ marginBottom: '24px' }}>
+            {[1, 2, 3].map((n) => (
+              <div key={n} className='skeleton-card' style={{ height: '110px' }} />
+            ))}
+          </div>
+          <div className='skeleton-card' style={{ height: '300px' }} />
         </div>
       )}
 
       {/* Error State */}
       {!loading && error && (
-        <div className='alert-danger' style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{error}</span>
-          <button onClick={fetchBlogs} className='btn btn-secondary' style={{ padding: '6px 14px', fontSize: '13px' }}>
+        <div className='alert-danger'>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+          <button onClick={fetchBlogs} className='btn btn-secondary btn-sm'>
             Thử lại
           </button>
         </div>
       )}
 
-      {/* Main Content (when not loading and no error) */}
+      {/* Main Content */}
       {!loading && !error && (
         <>
-          {/* Stats Cards */}
+          {/* Stats Grid */}
           <div className='myblogs-stats-grid'>
-            <div className='myblogs-stat-card'>
-              <div className='myblogs-stat-icon' style={{ backgroundColor: '#f0fdfa', color: '#0f766e' }}>
-                📝
-              </div>
-              <div className='myblogs-stat-content'>
-                <span className='myblogs-stat-label'>Tổng bài viết</span>
-                <span className='myblogs-stat-value'>{stats?.totalBlogs || 0}</span>
+            <div className='stat-metric-card metric-primary'>
+              <div className='stat-metric-icon'>📝</div>
+              <div>
+                <span className='stat-metric-label'>Tổng số bài viết</span>
+                <span className='stat-metric-number'>{(stats?.totalBlogs || 0).toLocaleString()}</span>
               </div>
             </div>
 
-            <div className='myblogs-stat-card'>
-              <div className='myblogs-stat-icon' style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
-                👁️
-              </div>
-              <div className='myblogs-stat-content'>
-                <span className='myblogs-stat-label'>Tổng lượt xem</span>
-                <span className='myblogs-stat-value'>{stats?.totalViews || 0}</span>
+            <div className='stat-metric-card metric-info'>
+              <div className='stat-metric-icon'>👁️</div>
+              <div>
+                <span className='stat-metric-label'>Tổng lượt xem độc giả</span>
+                <span className='stat-metric-number'>{(stats?.totalViews || 0).toLocaleString()}</span>
               </div>
             </div>
 
-            <div className='myblogs-stat-card'>
-              <div className='myblogs-stat-icon' style={{ backgroundColor: '#fff1f2', color: '#e11d48' }}>
-                ❤️
-              </div>
-              <div className='myblogs-stat-content'>
-                <span className='myblogs-stat-label'>Tổng lượt thích</span>
-                <span className='myblogs-stat-value'>{stats?.totalLikes || 0}</span>
+            <div className='stat-metric-card metric-rose'>
+              <div className='stat-metric-icon'>❤️</div>
+              <div>
+                <span className='stat-metric-label'>Lượt yêu thích nhận được</span>
+                <span className='stat-metric-number'>{(stats?.totalLikes || 0).toLocaleString()}</span>
               </div>
             </div>
           </div>
 
           {/* Empty State */}
           {blogs.length === 0 ? (
-            <div className='myblogs-empty-card'>
-              <div style={{ fontSize: '56px', marginBottom: '16px' }}>✍️</div>
-              <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-title)', marginBottom: '8px' }}>
-                Bạn chưa có bài viết nào
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '14.5px', maxWidth: '420px', margin: '0 auto 24px auto' }}>
-                Hãy chia sẻ góc nhìn, kiến thức và câu chuyện của bạn với cộng đồng Spiderum ngay hôm nay!
+            <div className='empty-state-card'>
+              <div className='empty-state-icon'>✍️</div>
+              <h3 className='empty-state-title'>Bạn chưa có bài viết nào</h3>
+              <p className='empty-state-desc'>
+                Hãy bắt đầu chia sẻ câu chuyện, kiến thức lập trình và kinh nghiệm của bạn với cộng đồng Spiderum ngay
+                hôm nay!
               </p>
-              <button onClick={() => navigate('/create')} className='btn btn-primary' style={{ padding: '10px 24px' }}>
-                Viết bài đầu tiên
+              <button onClick={() => navigate('/create')} className='btn btn-primary'>
+                Viết bài đầu tiên ngay
               </button>
             </div>
           ) : (
-            /* Blogs List / Table */
-            <div className='myblogs-list-card'>
-              <div className='myblogs-table-wrapper'>
-                <table className='myblogs-table'>
+            /* Table Card */
+            <div className='myblogs-table-card'>
+              <div className='table-responsive'>
+                <table className='modern-table'>
                   <thead>
                     <tr>
-                      <th>Tiêu đề bài viết</th>
-                      <th>Danh mục</th>
+                      <th>Bài viết</th>
+                      <th>Chuyên mục</th>
                       <th>Lượt xem</th>
                       <th>Lượt thích</th>
                       <th>Ngày đăng</th>
@@ -200,41 +187,55 @@ const MyBlogs = () => {
                     {blogs.map((blog) => (
                       <tr key={blog._id}>
                         <td>
-                          <Link to={`/blog/${blog._id}`} className='myblogs-blog-title'>
-                            {blog.title}
-                          </Link>
+                          <div className='table-blog-cell'>
+                            {blog.thumbnail && blog.thumbnail.trim() ? (
+                              <img
+                                src={blog.thumbnail.trim()}
+                                alt=''
+                                className='table-thumb-mini'
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            ) : (
+                              <div className='table-thumb-placeholder'>📄</div>
+                            )}
+                            <Link to={`/blog/${blog._id}`} className='table-blog-title'>
+                              {blog.title}
+                            </Link>
+                          </div>
                         </td>
                         <td>
-                          <span className='myblogs-category-tag'>{blog.category || 'Chưa phân loại'}</span>
+                          <span className='blog-card-category'>{blog.category || 'Chưa phân loại'}</span>
                         </td>
                         <td>
-                          <span className='myblogs-metric'>👁️ {blog.views || 0}</span>
+                          <span className='table-metric'>👁️ {(blog.views || 0).toLocaleString()}</span>
                         </td>
                         <td>
-                          <span className='myblogs-metric'>❤️ {blog.likes || 0}</span>
-                        </td>
-                        <td style={{ color: 'var(--text-muted)', fontSize: '13.5px', whiteSpace: 'nowrap' }}>
-                          {formatDate(blog.createdAt)}
+                          <span className='table-metric'>❤️ {(blog.likes || 0).toLocaleString()}</span>
                         </td>
                         <td>
-                          <div className='myblogs-actions'>
+                          <span className='table-date'>{formatDate(blog.createdAt)}</span>
+                        </td>
+                        <td>
+                          <div className='table-actions-group'>
                             <button
                               onClick={() => navigate(`/blog/${blog._id}`)}
-                              className='btn btn-secondary myblogs-action-btn'
-                              title='Xem chi tiết bài viết'
+                              className='btn btn-secondary btn-sm'
+                              title='Xem bài viết'
                             >
                               Xem
                             </button>
                             <button
                               onClick={() => navigate(`/blog/${blog._id}/edit`)}
-                              className='btn btn-secondary myblogs-action-btn'
+                              className='btn btn-secondary btn-sm'
                               title='Chỉnh sửa bài viết'
                             >
                               Sửa
                             </button>
                             <button
-                              onClick={() => handleDeleteClick(blog)}
-                              className='btn btn-danger myblogs-action-btn'
+                              onClick={() => setDeleteModalBlog(blog)}
+                              className='btn btn-danger btn-sm'
                               title='Xóa bài viết'
                             >
                               Xóa
@@ -253,21 +254,31 @@ const MyBlogs = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteModalBlog && (
-        <div className='modal-overlay'>
-          <div className='modal-card'>
+        <div className='modal-backdrop'>
+          <div className='modal-dialog'>
+            <div className='modal-icon-danger'>⚠️</div>
             <h3 className='modal-title'>Xác nhận xóa bài viết</h3>
-            <p className='modal-text'>
-              Bạn có chắc chắn muốn xóa bài viết <strong>"{deleteModalBlog.title}"</strong> không? Hành động này không thể hoàn tác.
+            <p className='modal-description'>
+              Bạn có chắc chắn muốn xóa vĩnh viễn bài viết <strong>"{deleteModalBlog.title}"</strong> không? Hành động
+              này không thể hoàn tác.
             </p>
             <div className='modal-actions'>
+              <button onClick={() => setDeleteModalBlog(null)} className='btn btn-secondary' disabled={deleting}>
+                Hủy bỏ
+              </button>
               <button onClick={handleDeleteConfirm} className='btn btn-danger' disabled={deleting}>
                 {deleting ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
               </button>
-              <button onClick={() => setDeleteModalBlog(null)} className='btn btn-secondary' disabled={deleting}>
-                Hủy
-              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`floating-toast toast-${toast.type}`}>
+          <span>{toast.type === 'success' ? '✅' : '❌'}</span>
+          <span>{toast.message}</span>
         </div>
       )}
     </div>

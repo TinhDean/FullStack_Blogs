@@ -117,7 +117,7 @@ describe('Comment Controller', () => {
       expect(Comment.create).not.toHaveBeenCalled();
     });
 
-    it('should return 500 if database error occurs while creating comment', async () => {
+    it('should forward database errors to the global error handler', async () => {
       const req = {
         body: {
           blogId: 'blog123',
@@ -132,10 +132,21 @@ describe('Comment Controller', () => {
 
       (Comment.create as any).mockRejectedValue(new Error('DB Connection Failed'));
 
+      await expect(createComment(req, res)).rejects.toThrow('DB Connection Failed');
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 if content is only whitespace', async () => {
+      const req = {
+        body: { blogId: 'blog123', content: '    ' },
+        user: { userId: 'user123', username: 'testuser' }
+      } as any;
+      const res = mockResponse();
+
       await createComment(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'DB Connection Failed' });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(Comment.create).not.toHaveBeenCalled();
     });
   });
 
@@ -175,7 +186,7 @@ describe('Comment Controller', () => {
       expect(res.json).toHaveBeenCalledWith(mockComments);
     });
 
-    it('should return 500 if database error occurs while fetching comments', async () => {
+    it('should forward database errors while fetching comments', async () => {
       const req = {
         params: {
           blogId: 'blog123'
@@ -186,10 +197,8 @@ describe('Comment Controller', () => {
       const mockSort = vi.fn().mockRejectedValue(new Error('Fetch error'));
       (Comment.find as any).mockReturnValue({ sort: mockSort });
 
-      await getComments(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Fetch error' });
+      await expect(getComments(req, res)).rejects.toThrow('Fetch error');
+      expect(res.json).not.toHaveBeenCalled();
     });
   });
 
@@ -294,7 +303,7 @@ describe('Comment Controller', () => {
       });
     });
 
-    it('should return 500 if database error occurs while deleting comment', async () => {
+    it('should forward database errors while deleting comment', async () => {
       const req = {
         params: { id: 'comment123' },
         user: { userId: 'user123', role: 'user' }
@@ -303,12 +312,8 @@ describe('Comment Controller', () => {
 
       (Comment.findById as any).mockRejectedValue(new Error('DB error'));
 
-      await deleteComment(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'DB error'
-      });
+      await expect(deleteComment(req, res)).rejects.toThrow('DB error');
+      expect(Comment.findByIdAndDelete).not.toHaveBeenCalled();
     });
   });
 });

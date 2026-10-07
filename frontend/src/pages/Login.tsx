@@ -2,16 +2,24 @@ import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+interface LocationState {
+  from?: {
+    pathname?: string
+  }
+}
+
 const Login = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const from = (location.state as any)?.from?.pathname || '/'
+  const locationState = location.state as LocationState | null
+  const from = locationState?.from?.pathname || '/'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,55 +42,30 @@ const Login = () => {
     }
   }
 
-  return (
-    <div className='form-layout'>
-      <button onClick={() => navigate('/')} className='btn btn-secondary detail-back-btn'>
-        <svg
-          width='14'
-          height='14'
-          viewBox='0 0 24 24'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth='2.5'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        >
-          <line x1='19' y1='12' x2='5' y2='12' />
-          <polyline points='12 19 5 12 12 5' />
-        </svg>
-        Quay lại trang chủ
-      </button>
+  const fillCredentials = (fillEmail: string, fillPass: string) => {
+    setEmail(fillEmail)
+    setPassword(fillPass)
+    setError('')
+  }
 
-      <div className='form-card' style={{ maxWidth: '480px', margin: 'auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <span style={{ fontSize: '32px' }}>🕷️</span>
-          <h1 className='form-title' style={{ marginTop: '12px', marginBottom: '4px' }}>
-            Chào mừng trở lại
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14.5px' }}>Đăng nhập để tiếp tục đóng góp cho Spiderum</p>
+  return (
+    <div className='auth-page-wrapper'>
+      <div className='auth-card'>
+        {/* Brand & Title */}
+        <div className='auth-header'>
+          <div className='auth-brand-icon'>🕷️</div>
+          <h1 className='auth-title'>Chào mừng trở lại</h1>
+          <p className='auth-subtitle'>Đăng nhập để tiếp tục đóng góp bài viết và thảo luận trên Spiderum</p>
         </div>
 
         {error && (
           <div className='alert-danger'>
-            <svg
-              width='16'
-              height='16'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2.5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <circle cx='12' cy='12' r='10' />
-              <line x1='12' y1='8' x2='12' y2='12' />
-              <line x1='12' y1='16' x2='12.01' y2='16' />
-            </svg>
-            {error}
+            <span style={{ fontSize: '18px' }}>⚠️</span>
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className='auth-form'>
           <div className='form-group'>
             <label htmlFor='email' className='form-label'>
               Email hoặc Username
@@ -95,52 +78,74 @@ const Login = () => {
               placeholder='Nhập email hoặc username...'
               disabled={loading}
               className='input'
+              autoComplete='username'
             />
           </div>
 
           <div className='form-group'>
-            <label htmlFor='password' className='form-label'>
-              Mật khẩu
-            </label>
+            <div className='form-label-row'>
+              <label htmlFor='password' className='form-label'>
+                Mật khẩu
+              </label>
+              <button type='button' onClick={() => setShowPassword(!showPassword)} className='btn-text-action'>
+                {showPassword ? 'Ẩn' : 'Hiện'} mật khẩu
+              </button>
+            </div>
             <input
               id='password'
-              type='password'
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder='Nhập mật khẩu...'
               disabled={loading}
               className='input'
+              autoComplete='current-password'
             />
           </div>
 
-          <button
-            type='submit'
-            disabled={loading}
-            className='btn btn-primary'
-            style={{
-              width: '100%',
-              padding: '12px',
-              fontSize: '15px',
-              marginTop: '10px'
-            }}
-          >
-            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+          <button type='submit' disabled={loading} className='btn btn-primary btn-lg full-width auth-submit-btn'>
+            {loading ? (
+              <>
+                <span className='spinner-inline' />
+                <span>Đang xác thực...</span>
+              </>
+            ) : (
+              <span>Đăng nhập</span>
+            )}
           </button>
         </form>
 
-        <p
-          style={{
-            textAlign: 'center',
-            marginTop: '20px',
-            fontSize: '14px',
-            color: 'var(--text-muted)'
-          }}
-        >
-          Chưa có tài khoản?{' '}
-          <Link to='/register' style={{ color: 'var(--accent)', fontWeight: '600' }}>
-            Đăng ký ngay
+        {/* Demo Accounts Quick-Fill for Portfolio Review */}
+        <div className='auth-demo-helper'>
+          <div className='demo-helper-header'>
+            <span>🚀 Tài khoản demo phỏng vấn:</span>
+          </div>
+          <div className='demo-helper-buttons'>
+            <button
+              type='button'
+              onClick={() => fillCredentials('admin@spiderum.dev', 'Admin@2026')}
+              className='demo-quick-btn'
+              title='Nhập tài khoản Quản trị viên'
+            >
+              👑 Admin: <code>admin@spiderum.dev</code>
+            </button>
+            <button
+              type='button'
+              onClick={() => fillCredentials('nam.tech@spiderum.dev', 'User@2026')}
+              className='demo-quick-btn'
+              title='Nhập tài khoản Tác giả Lập trình'
+            >
+              ✍️ User: <code>nam.tech@spiderum.dev</code>
+            </button>
+          </div>
+        </div>
+
+        <div className='auth-footer'>
+          <span>Chưa có tài khoản?</span>{' '}
+          <Link to='/register' className='auth-link'>
+            Đăng ký tài khoản ngay
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   )
